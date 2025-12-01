@@ -35,6 +35,10 @@ public class Product {
     @ManyToOne(optional = false)
     private Category category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @NotNull
+    private Integer stock = 0;
+
+    @OneToMany(mappedBy = "product")
     private List<LigneVente> lignesVente;
+
 }

@@ -29,23 +29,30 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse create(ProductRequest request) {
 
-        // Vérification catégorie
+        // Vérifier catégorie
         Category category = categoryRepo.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-        // Vérifier duplicat de titre
+        // Vérifier unicité ASIN
+        if (repo.existsByAsinIgnoreCase(request.getAsin())) {
+            throw new DuplicateResourceException("ASIN already exists");
+        }
+
+        // Vérifier unicité titre dans toute la base (tu peux changer à par catégorie si tu veux)
         if (repo.existsByTitleIgnoreCase(request.getTitle())) {
             throw new DuplicateResourceException("Product title already exists");
         }
 
+        // Vérifier prix
         if (request.getPrice() <= 0) {
-            throw new BadRequestException("Invalid price");
+            throw new BadRequestException("Price must be > 0");
         }
 
         Product product = mapper.toEntity(request);
         product.setCategory(category);
 
         Product saved = repo.save(product);
+
         return mapper.toResponse(saved);
     }
 
@@ -64,10 +71,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponse> getPaginated(int page, int size) {
+    public Page<ProductResponse> getPaginated(int page, int size, String sortBy) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        return repo.findAll(pageable).map(mapper::toResponse);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
+
+        return repo.findAll(pageable)
+                .map(mapper::toResponse);
     }
 
     @Override
@@ -79,19 +88,28 @@ public class ProductServiceImpl implements ProductService {
         Category category = categoryRepo.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
+        // Vérifier ASIN
+        if (!product.getAsin().equalsIgnoreCase(request.getAsin()) &&
+                repo.existsByAsinIgnoreCase(request.getAsin())) {
+            throw new DuplicateResourceException("ASIN already used");
+        }
+
+        // Vérifier titre
         if (!product.getTitle().equalsIgnoreCase(request.getTitle()) &&
                 repo.existsByTitleIgnoreCase(request.getTitle())) {
-            throw new DuplicateResourceException("Product title already used");
+            throw new DuplicateResourceException("Title already used");
         }
 
         if (request.getPrice() <= 0) {
             throw new BadRequestException("Invalid price");
         }
 
+        product.setAsin(request.getAsin());
         product.setTitle(request.getTitle());
         product.setPrice(request.getPrice());
         product.setRating(request.getRating());
         product.setReviewCount(request.getReviewCount());
+        product.setRank(request.getRank());
         product.setCategory(category);
 
         return mapper.toResponse(repo.save(product));
@@ -102,8 +120,14 @@ public class ProductServiceImpl implements ProductService {
         Product product = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        if (!product.getLignesVente().isEmpty()) {
+        // Si produit utilisé dans ventes → empêcher suppression
+        if (product.getLignesVente() != null && !product.getLignesVente().isEmpty()) {
             throw new BadRequestException("Cannot delete product used in sales");
+        }
+
+        // Si stock positif → bloquer suppression
+        if (product.getStock() > 0) {
+            throw new BadRequestException("Cannot delete product with stock > 0");
         }
 
         repo.delete(product);

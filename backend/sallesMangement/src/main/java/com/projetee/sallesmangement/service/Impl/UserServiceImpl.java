@@ -3,15 +3,17 @@ package com.projetee.sallesmangement.service.Impl;
 import com.projetee.sallesmangement.dto.user.UserRequest;
 import com.projetee.sallesmangement.dto.user.UserResponse;
 import com.projetee.sallesmangement.entity.User;
-import com.projetee.sallesmangement.exception.BadRequestException;
 import com.projetee.sallesmangement.exception.DuplicateResourceException;
 import com.projetee.sallesmangement.exception.ResourceNotFoundException;
 import com.projetee.sallesmangement.mapper.UserMapper;
 import com.projetee.sallesmangement.repository.UserRepository;
 import com.projetee.sallesmangement.service.UserService;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,10 +27,17 @@ public class UserServiceImpl implements UserService {
     public UserResponse create(UserRequest request) {
 
         if (repo.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateResourceException("Email already used");
+            throw new DuplicateResourceException("Email already in use");
+        }
+
+        if (repo.findByUsername(request.getUsername()).isPresent()) {
+            throw new DuplicateResourceException("Username already taken");
         }
 
         User user = mapper.toEntity(request);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setActive(true);
+
         User saved = repo.save(user);
 
         return mapper.toResponse(saved);
@@ -37,9 +46,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse get(Long id) {
         User user = repo.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found")
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         return mapper.toResponse(user);
     }
 
@@ -52,35 +60,55 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Page<UserResponse> getPaginated(int page, int size, String sortBy) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
+
+        return repo.findAll(pageable)
+                .map(mapper::toResponse);
+    }
+
+    @Override
     public UserResponse update(Long id, UserRequest request) {
 
         User user = repo.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found")
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!user.getEmail().equalsIgnoreCase(request.getEmail()) &&
-                repo.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateResourceException("Email already used");
+        if (!user.getEmail().equalsIgnoreCase(request.getEmail())
+                && repo.existsByEmailIgnoreCase(request.getEmail())) {
+            throw new DuplicateResourceException("Email already in use");
         }
 
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword()); // en clair pour l'instant
         user.setRole(request.getRole());
 
         return mapper.toResponse(repo.save(user));
     }
 
     @Override
+    public UserResponse activate(Long id) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setActive(true);
+        return mapper.toResponse(repo.save(user));
+    }
+
+    @Override
+    public UserResponse deactivate(Long id) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setActive(false);
+        return mapper.toResponse(repo.save(user));
+    }
+
+    @Override
     public void delete(Long id) {
         User user = repo.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found")
-                );
-
-        if (!user.getSales().isEmpty()) {
-            throw new BadRequestException("User has sales and cannot be deleted");
-        }
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         repo.delete(user);
     }

@@ -13,9 +13,5 @@ public class SaleRequest {
     private Long userId;
 
     @NotNull
-    private String saleDate;
-
-    @NotNull
-    private Double totalAmount;
     private List<LigneVenteRequest> lignes;
 }

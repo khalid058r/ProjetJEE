@@ -1,7 +1,6 @@
 package com.projetee.sallesmangement.dto.product;
 
 import lombok.Data;
-
 @Data
 public class ProductResponse {
 
@@ -15,4 +14,5 @@ public class ProductResponse {
 
     private Long categoryId;
     private String categoryName;
+    private Integer stock;
 }

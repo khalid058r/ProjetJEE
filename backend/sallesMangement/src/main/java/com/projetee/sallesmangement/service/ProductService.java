@@ -14,9 +14,10 @@ public interface ProductService {
 
     List<ProductResponse> getAll();
 
-    Page<ProductResponse> getPaginated(int page, int size);
+    Page<ProductResponse> getPaginated(int page, int size, String sortBy);
 
     ProductResponse update(Long id, ProductRequest request);
 
     void delete(Long id);
 }
+

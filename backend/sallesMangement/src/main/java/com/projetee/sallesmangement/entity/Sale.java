@@ -29,4 +29,8 @@ public class Sale {
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL)
     private List<LigneVente> lignesVente;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SaleStatus status = SaleStatus.CONFIRMED;
 }

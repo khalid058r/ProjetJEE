@@ -6,17 +6,20 @@ import com.projetee.sallesmangement.dto.sale.SaleResponse;
 import com.projetee.sallesmangement.entity.*;
 import com.projetee.sallesmangement.exception.BadRequestException;
 import com.projetee.sallesmangement.exception.ResourceNotFoundException;
-import com.projetee.sallesmangement.mapper.LigneVenteMapper;
 import com.projetee.sallesmangement.mapper.SaleMapper;
-import com.projetee.sallesmangement.repository.LigneVenteRepository;
 import com.projetee.sallesmangement.repository.ProductRepository;
 import com.projetee.sallesmangement.repository.SaleRepository;
 import com.projetee.sallesmangement.repository.UserRepository;
 import com.projetee.sallesmangement.service.SaleService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,79 +29,110 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepo;
     private final UserRepository userRepo;
     private final ProductRepository productRepo;
-    private final LigneVenteRepository ligneRepo;
     private final SaleMapper saleMapper;
-    private final LigneVenteMapper ligneMapper;
 
     @Override
+    @Transactional
     public SaleResponse create(SaleRequest request) {
 
-        // Vérifier user
         User user = userRepo.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Rôle
         if (user.getRole() != Role.ADMIN && user.getRole() != Role.VENDEUR) {
             throw new BadRequestException("User not allowed to create sales");
         }
 
-        // Création de la vente
         Sale sale = new Sale();
-        sale.setUser(user);
         sale.setSaleDate(LocalDate.now());
-
-        Sale savedSale = saleRepo.save(sale);
+        sale.setUser(user);
+        sale.setStatus(SaleStatus.CONFIRMED);
+        sale.setTotalAmount(0.0);
+        sale.setLignesVente(new ArrayList<>());
 
         double total = 0;
 
-        // Ajouter lignes
-        for (LigneVenteRequest lineRequest : request.getLignes()) {
+        for (LigneVenteRequest lineReq : request.getLignes()) {
 
-            Product product = productRepo.findById(lineRequest.getProductId())
+            Product product = productRepo.findById(lineReq.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-            if (lineRequest.getQuantity() <= 0) {
-                throw new BadRequestException("Invalid quantity");
+            if (lineReq.getQuantity() <= 0) {
+                throw new BadRequestException("Quantity must be > 0");
             }
 
+            if (product.getStock() < lineReq.getQuantity()) {
+                throw new BadRequestException("Not enough stock for product: " + product.getTitle());
+            }
+
+            product.setStock(product.getStock() - lineReq.getQuantity());
+            productRepo.save(product);
+
             LigneVente lv = new LigneVente();
-            lv.setSale(savedSale);
+            lv.setSale(sale);
             lv.setProduct(product);
-            lv.setQuantity(lineRequest.getQuantity());
+            lv.setQuantity(lineReq.getQuantity());
             lv.setUnitPrice(product.getPrice());
-            lv.setLineTotal(product.getPrice() * lineRequest.getQuantity());
+            lv.setLineTotal(product.getPrice() * lineReq.getQuantity());
 
+            sale.getLignesVente().add(lv);
             total += lv.getLineTotal();
-
-            ligneRepo.save(lv);
         }
 
-        savedSale.setTotalAmount(total);
-        saleRepo.save(savedSale);
+        sale.setTotalAmount(total);
+        Sale saved = saleRepo.save(sale);
 
-        return saleMapper.toResponse(savedSale);
+        return saleMapper.toResponse(saved);
     }
 
     @Override
     public SaleResponse get(Long id) {
         Sale sale = saleRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
-
         return saleMapper.toResponse(sale);
     }
 
     @Override
     public List<SaleResponse> getAll() {
-        return saleRepo.findAll().stream()
+        return saleRepo.findAll()
+                .stream()
                 .map(saleMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public Page<SaleResponse> getPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return saleRepo.findAll(pageable)
+                .map(saleMapper::toResponse);
     }
 
     @Override
     public void delete(Long id) {
         Sale sale = saleRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
-
         saleRepo.delete(sale);
+    }
+
+    @Override
+    @Transactional
+    public SaleResponse cancel(Long id) {
+
+        Sale sale = saleRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
+
+        if (sale.getStatus() == SaleStatus.CANCELLED) {
+            throw new BadRequestException("Sale already cancelled");
+        }
+
+        for (LigneVente lv : sale.getLignesVente()) {
+            Product p = lv.getProduct();
+            p.setStock(p.getStock() + lv.getQuantity());
+            productRepo.save(p);
+        }
+
+        sale.setStatus(SaleStatus.CANCELLED);
+        saleRepo.save(sale);
+
+        return saleMapper.toResponse(sale);
     }
 }

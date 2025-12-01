@@ -21,5 +21,8 @@ public class ProductRequest {
     private Integer rank;
 
     @NotNull
+    private Integer stock;
+
+    @NotNull
     private Long categoryId;
 }

@@ -1,6 +1,6 @@
 package com.projetee.sallesmangement.service;
 
-import  com.projetee.sallesmangement.dto.category.CategoryRequest;
+import com.projetee.sallesmangement.dto.category.CategoryRequest;
 import com.projetee.sallesmangement.dto.category.CategoryResponse;
 import org.springframework.data.domain.Page;
 
@@ -14,9 +14,10 @@ public interface CategoryService {
 
     List<CategoryResponse> getAll();
 
-    Page<CategoryResponse> getPaginated(int page, int size);
+    Page<CategoryResponse> getPaginated(int page, int size, String sortBy);
 
     CategoryResponse update(Long id, CategoryRequest request);
 
     void delete(Long id);
 }
+

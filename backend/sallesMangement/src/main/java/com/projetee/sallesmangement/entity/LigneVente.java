@@ -18,7 +18,7 @@ public class LigneVente {
     @NotNull
     private Integer quantity;
 
-    @NotNull
+    @Column(nullable = false)
     private Double unitPrice;
 
     @NotNull

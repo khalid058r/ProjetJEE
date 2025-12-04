@@ -11,6 +11,7 @@ public class ProductResponse {
     private Double rating;
     private Integer reviewCount;
     private Integer rank;
+    private String imageUrl;
 
     private Long categoryId;
     private String categoryName;

@@ -15,6 +15,8 @@ public class ProductRequest {
 
     @NotNull
     private Double price;
+    @NotBlank
+    private String imageUrl;
 
     private Double rating;
     private Integer reviewCount;

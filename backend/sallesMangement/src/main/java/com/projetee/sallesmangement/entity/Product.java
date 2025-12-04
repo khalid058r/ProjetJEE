@@ -31,6 +31,8 @@ public class Product {
     private Integer reviewCount;
 
     private Integer rank;
+    private String imageUrl;
+
 
     @ManyToOne(optional = false)
     private Category category;

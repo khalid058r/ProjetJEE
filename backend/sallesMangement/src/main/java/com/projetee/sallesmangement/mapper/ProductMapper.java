@@ -62,6 +62,7 @@ public class ProductMapper {
                 .reviewCount(dto.getReviewCount())
                 .rank(dto.getRank())
                 .stock(dto.getStock())
+                .imageUrl(dto.getImageUrl())
                 .build();
     }
 

@@ -31,6 +31,7 @@ public class Product {
     private Integer reviewCount;
 
     private Integer rank;
+    @Column(name = "image_url")
     private String imageUrl;
 
 

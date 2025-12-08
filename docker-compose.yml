@@ -1,18 +1,17 @@
 version: '3.8'
 services:
-  mysql-db:
-    image: mysql:8.3
-    container_name: mysql_salles
+  postgres:
+    image: postgres:15
+    container_name: salles_postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: salles_management
-      MYSQL_USER: khalid
-      MYSQL_PASSWORD: khalid123
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sallesdb
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mysql_data:
+  postgres_data:

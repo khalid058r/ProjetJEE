@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import { BuildingOfficeIcon } from "@heroicons/react/24/outline";
+
 import {
   HomeIcon,
   CubeIcon,
@@ -34,6 +36,19 @@ export default function Sidebar() {
             {link.name}
           </NavLink>
         ))}
+        <NavLink
+            to="/sales"
+            className={({ isActive }) =>
+              `flex items-center gap-3 p-3 rounded-lg transition ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`
+            }
+          >
+            <BuildingOfficeIcon className="h-5 w-5" />
+            <span>Sales</span>
+          </NavLink>
       </nav>
     </aside>
   );

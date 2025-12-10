@@ -2,12 +2,16 @@ package com.projetee.sallesmangement.service.Impl;
 
 import com.projetee.sallesmangement.dto.category.CategoryRequest;
 import com.projetee.sallesmangement.dto.category.CategoryResponse;
+import com.projetee.sallesmangement.dto.product.ProductResponse;
 import com.projetee.sallesmangement.entity.Category;
+import com.projetee.sallesmangement.entity.Product;
 import com.projetee.sallesmangement.exception.BadRequestException;
 import com.projetee.sallesmangement.exception.DuplicateResourceException;
 import com.projetee.sallesmangement.exception.ResourceNotFoundException;
 import com.projetee.sallesmangement.mapper.CategoryMapper;
+import com.projetee.sallesmangement.mapper.ProductMapper;
 import com.projetee.sallesmangement.repository.CategoryRepository;
+import com.projetee.sallesmangement.repository.ProductRepository;
 import com.projetee.sallesmangement.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -21,6 +25,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository repo;
     private final CategoryMapper mapper;
+    private final ProductRepository productRepo;
+    private final ProductMapper productMapper;
 
     @Override
     public CategoryResponse create(CategoryRequest request) {
@@ -88,4 +94,17 @@ public class CategoryServiceImpl implements CategoryService {
 
         repo.delete(category);
     }
+    @Override
+    public List<ProductResponse> getProductsByCategory(Long categoryId) {
+
+        Category category = repo.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        List<Product> products = productRepo.findByCategoryId(categoryId);
+
+        return products.stream()
+                .map(productMapper::toResponse)
+                .toList();
+    }
+
 }

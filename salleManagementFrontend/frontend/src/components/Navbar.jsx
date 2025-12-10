@@ -1,7 +1,13 @@
 import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "../context/ThemeContext";
+import { UserMenu } from "./UserMenu";
+
 
 export default function Navbar() {
+    const handleLogout = () => {
+    // delete token later
+    window.location.href = "/";
+  };
   const { theme, toggleMode, setPrimary } = useTheme();
 
   return (
@@ -42,6 +48,7 @@ export default function Navbar() {
           <option value="rose">Pink</option>
         </select>
       </div>
+       <UserMenu onLogout={handleLogout} />
     </div>
   );
 }

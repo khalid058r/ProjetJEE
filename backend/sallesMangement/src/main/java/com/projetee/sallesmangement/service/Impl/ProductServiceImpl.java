@@ -126,9 +126,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Si stock positif → bloquer suppression
-        if (product.getStock() > 0) {
-            throw new BadRequestException("Cannot delete product with stock > 0");
-        }
+//        if (product.getStock() > 0) {
+//            throw new BadRequestException("Cannot delete product with stock > 0");
+//        }
 
         repo.delete(product);
     }

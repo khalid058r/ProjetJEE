@@ -2,6 +2,7 @@ package com.projetee.sallesmangement.controller;
 
 import com.projetee.sallesmangement.dto.category.CategoryRequest;
 import com.projetee.sallesmangement.dto.category.CategoryResponse;
+import com.projetee.sallesmangement.dto.product.ProductResponse;
 import com.projetee.sallesmangement.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -59,4 +60,10 @@ public class CategoryController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/{id}/products")
+    public ResponseEntity<List<ProductResponse>> getProductsByCategory(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getProductsByCategory(id));
+    }
+
+
 }

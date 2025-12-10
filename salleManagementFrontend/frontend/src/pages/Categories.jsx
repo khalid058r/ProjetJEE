@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PlusIcon,
   TagIcon,
@@ -6,37 +6,84 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
+import {
+  getCategories,
+  createCategory,
+  deleteCategory,
+} from "../services/categoryService";
+
+import { useNavigate } from "react-router-dom";
+
 export default function Categories() {
-  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
   const [categories, setCategories] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
     name: "",
     description: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  // ---------------------------------
+  // LOAD CATEGORIES FROM BACKEND
+  // ---------------------------------
+  const loadCategories = async () => {
+    setLoading(true);
+    try {
+      const res = await getCategories();
+      setCategories(res.data);
+    } catch (err) {
+      console.error("ERROR LOADING CATEGORIES:", err);
+    }
+    setLoading(false);
   };
 
-  const addCategory = () => {
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  // ---------------------------------
+  // CREATE CATEGORY
+  // ---------------------------------
+  const addCategory = async () => {
     if (!form.name) return;
 
-    const newCategory = {
-      id: Date.now(),
-      ...form,
-    };
+    try {
+      await createCategory(form);
+      setShowModal(false);
 
-    setCategories([...categories, newCategory]);
-    setShowModal(false);
+      // Reset form
+      setForm({ name: "", description: "" });
 
-    setForm({
-      name: "",
-      description: "",
-    });
+      // Reload list
+      loadCategories();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ---------------------------------
+  // DELETE CATEGORY
+  // ---------------------------------
+  const removeCategory = async (id) => {
+    if (!window.confirm("Delete this category?")) return;
+
+    try {
+      await deleteCategory(id);
+      loadCategories();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <div>
+
       {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
@@ -50,35 +97,52 @@ export default function Categories() {
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group cursor-pointer"
+              onClick={() => navigate(`/categories/${cat.id}`)}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <TagIcon className="h-8 w-8 text-blue-600" />
+                <h2 className="text-xl font-semibold">{cat.name}</h2>
+              </div>
 
-        {categories.map((cat) => (
-          <div
-            key={cat.id}
-            className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition group"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <TagIcon className="h-8 w-8 text-blue-600" />
-              <h2 className="text-xl font-semibold">{cat.name}</h2>
+              <p className="text-gray-600 text-sm line-clamp-3">
+                {cat.description || "No description provided."}
+              </p>
+
+              <div className="flex justify-end gap-3 pt-5">
+                <button
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                >
+                  <PencilSquareIcon className="h-5 w-5 text-blue-600" />
+                </button>
+
+                <button
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-red-100"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeCategory(cat.id);
+                  }}
+                >
+                  <TrashIcon className="h-5 w-5 text-red-600" />
+                </button>
+              </div>
             </div>
+          ))}
 
-            <p className="text-gray-600 text-sm line-clamp-3">
-              {cat.description || "No description provided."}
+          {categories.length === 0 && (
+            <p className="text-gray-500 text-center col-span-full">
+              No categories
             </p>
-
-            <div className="flex justify-end gap-3 pt-5">
-              <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200">
-                <PencilSquareIcon className="h-5 w-5 text-blue-600" />
-              </button>
-
-              <button className="p-2 rounded-lg bg-gray-100 hover:bg-red-100">
-                <TrashIcon className="h-5 w-5 text-red-600" />
-              </button>
-            </div>
-          </div>
-        ))}
-
-      </div>
+          )}
+        </div>
+      )}
 
       {/* MODAL */}
       {showModal && (
@@ -88,14 +152,13 @@ export default function Categories() {
             <h2 className="text-2xl font-semibold mb-6">Add Category</h2>
 
             <div className="space-y-4">
-
               <div>
-                <label className="block text-sm mb-1">Category Name</label>
+                <label className="block text-sm mb-1">Name</label>
                 <input
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  placeholder="Example: Electronics"
+                  placeholder="Electronics"
                   className="w-full border rounded-lg p-2"
                 />
               </div>
@@ -107,14 +170,12 @@ export default function Categories() {
                   value={form.description}
                   onChange={handleChange}
                   placeholder="Optional description..."
-                  rows={3}
                   className="w-full border rounded-lg p-2 resize-none"
+                  rows={3}
                 ></textarea>
               </div>
-
             </div>
 
-            {/* BUTTONS */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setShowModal(false)}

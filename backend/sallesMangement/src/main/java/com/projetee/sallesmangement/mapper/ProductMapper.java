@@ -77,6 +77,7 @@ public class ProductMapper {
         dto.setReviewCount(entity.getReviewCount());
         dto.setRank(entity.getRank());
         dto.setStock(entity.getStock());
+        dto.setImageUrl(entity.getImageUrl());
 
         dto.setCategoryId(entity.getCategory().getId());
         dto.setCategoryName(entity.getCategory().getName());

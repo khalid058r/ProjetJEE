@@ -15,6 +15,7 @@ export default function ProductDetails() {
   const [showDelete, setShowDelete] = useState(false);
 
   // Load product
+
   useEffect(() => {
     loadProduct();
   }, [id]);
@@ -36,6 +37,23 @@ export default function ProductDetails() {
       showToast("Failed to load product", "error");
       navigate("/products");
     }
+  };
+    const openEditModal = (p) => {
+    setForm({
+      asin: p.asin,
+      title: p.title,
+      price: p.price,
+      stock: p.stock,
+      categoryId: p.categoryId,
+      rating: p.rating || 0,
+      reviewCount: p.reviewCount || 0,
+      rank: p.rank || 0,
+      imageUrl: p.imageUrl
+    });
+
+    setPreview(p.imageUrl);
+    setEditingId(p.id);
+    setShowModal(true);
   };
 
   const handleDelete = async () => {
@@ -59,7 +77,7 @@ export default function ProductDetails() {
 
         <div className="flex gap-3">
           <button
-            onClick={() => navigate(`/products/${id}/edit`)}
+            onClick={() => openEditModal(p)}
             className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
           >
             <PencilSquareIcon className="h-6 w-6 text-blue-600" />

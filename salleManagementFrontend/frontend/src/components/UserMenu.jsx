@@ -10,7 +10,6 @@ export function UserMenu({ onLogout }) {
 
   return (
     <div className="relative">
-      {/* AVATAR */}
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"

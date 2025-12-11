@@ -35,7 +35,8 @@ export const CHART_COLORS = [
  * @returns {string} Formatted currency
  */
 export function formatCurrency(value) {
-  if (typeof value !== 'number') return '0.00 DH';
+  if (value === null || value === undefined || typeof value !== 'number') return '0.00 DH';
+  if (isNaN(value)) return '0.00 DH';
   return `${value.toFixed(2)} DH`;
 }
 

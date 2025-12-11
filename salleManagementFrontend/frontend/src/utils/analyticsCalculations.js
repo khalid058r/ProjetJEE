@@ -183,13 +183,13 @@ export function calculateStatistics(values) {
   const q3 = sorted[Math.floor(sorted.length * 0.75)];
   
   return {
-    mean: mean.toFixed(2),
-    median: median.toFixed(2),
-    std: std.toFixed(2),
-    min: Math.min(...values).toFixed(2),
-    max: Math.max(...values).toFixed(2),
-    q1: q1.toFixed(2),
-    q3: q3.toFixed(2)
+    mean: parseFloat(mean.toFixed(2)),
+    median: parseFloat(median.toFixed(2)),
+    std: parseFloat(std.toFixed(2)),
+    min: parseFloat(Math.min(...values).toFixed(2)),
+    max: parseFloat(Math.max(...values).toFixed(2)),
+    q1: parseFloat(q1.toFixed(2)),
+    q3: parseFloat(q3.toFixed(2))
   };
 }
 

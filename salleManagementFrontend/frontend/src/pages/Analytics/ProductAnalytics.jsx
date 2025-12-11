@@ -241,7 +241,7 @@ export default function ProductAnalytics() {
           priority: 'high',
           product: product.title,
           message: `Low stock (${product.stock} units). High demand. Restock immediately.`,
-          icon: AlertTriangle
+          icon: AlertCircle
         });
       }
     });

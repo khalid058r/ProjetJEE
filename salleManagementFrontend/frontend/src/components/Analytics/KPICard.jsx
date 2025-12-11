@@ -19,8 +19,10 @@ const KPICard = React.memo(({
   
   // Format value based on type
   const formatValue = (val) => {
+    if (format === 'text') return val; // Return text as-is
     if (format === 'currency') return formatCurrency(val);
     if (format === 'percentage') return formatPercentage(val);
+    if (typeof val === 'string') return val; // Handle string values
     return formatNumber(val);
   };
 

@@ -173,9 +173,9 @@ export default function CategoryAnalytics() {
     }));
     setRadarData(radar);
 
-    // Calculate seasonality
-    const seasonality = calculateSeasonality(sales);
-    setSeasonalityData(seasonality);
+    // Calculate seasonality (not used in current UI, but prepared for future)
+    // const seasonality = calculateSeasonality(sales);
+    // Can be used for seasonal analysis chart in future
 
     // Build growth matrix
     const matrix = kpis.map(cat => ({

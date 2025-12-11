@@ -1,7 +1,7 @@
 import api from "./api";
 
 const AnalyticsService = {
-
+  // Existing endpoints
   getGlobalKpi: () => api.get("/analytics/kpi"),
   getMonthlySales: () => api.get("/analytics/sales/monthly"),
   getDailySales: (start, end) =>
@@ -14,6 +14,23 @@ const AnalyticsService = {
   getCurrentMonthEvolution: () =>
     api.get("/analytics/evolution/current-month"),
   getBasketStats: () => api.get("/analytics/basket/stats"),
+  
+  // New endpoints for enhanced analytics
+  getProductLifecycle: () => api.get("/analytics/products/lifecycle"),
+  getPriceHistogram: () => api.get("/analytics/products/price-histogram"),
+  getHourlySales: () => api.get("/analytics/sales/hourly"),
+  getCategoryGrowth: () => api.get("/analytics/categories/growth"),
+  getSalesForecast: (days = 30) => 
+    api.get("/analytics/sales/forecast", { params: { days } }),
+  getCustomerCohorts: () => api.get("/analytics/customers/cohorts"),
+  getSalesDistribution: () => api.get("/analytics/sales/distribution"),
+  getTopClients: (limit = 10) => 
+    api.get("/analytics/clients/top", { params: { limit } }),
+  getSalesByDay: () => api.get("/analytics/sales/by-day"),
+  getSalesByHour: () => api.get("/analytics/sales/by-hour"),
+  getConversionFunnel: () => api.get("/analytics/funnel/conversion"),
+  getCategoryTreemap: () => api.get("/analytics/categories/treemap"),
+  getProductBCG: () => api.get("/analytics/products/bcg-matrix"),
 };
 
 export default AnalyticsService;

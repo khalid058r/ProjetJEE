@@ -78,6 +78,12 @@ import Sales from "../pages/Sales";
 import SaleDetails from "../pages/SaleDetails";
 import Register from "../pages/Register"
 
+import Overview from "../pages/Analytics/Overview"
+import ProductAnalytics from "../pages/Analytics/ProductAnalytics"
+import CategoryAnalytics from "../pages/Analytics/CategoryAnalytics"
+import SalesAnalytics from "../pages/Analytics/SalesAnalytics"
+
+
 import VendeurHome from "../pages/role-tests/VendeurHome";
 import AnalysteHome from "../pages/role-tests/AnalysteHome";
 import AcheteurHome from "../pages/role-tests/AcheteurHome";
@@ -101,6 +107,10 @@ export default function AppRouter() {
           <Route path="/users" element={<Users />} />
           <Route path="/users/new" element={<UserForm />} />
           <Route path="/users/:id" element={<UserForm />} />
+          <Route path="/analytics" element={<Overview />} />
+          <Route path="/analytics/products" element={<ProductAnalytics />} />
+          <Route path="/analytics/categories" element={<CategoryAnalytics />} />
+          <Route path="/analytics/sales" element={<SalesAnalytics />} />
         </Route>
         <Route path="/vendeur" element={<VendeurHome />} />
         <Route path="/analyste" element={<AnalysteHome />} />

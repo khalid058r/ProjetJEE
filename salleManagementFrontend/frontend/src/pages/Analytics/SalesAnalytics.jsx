@@ -54,7 +54,7 @@ import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../uti
  */
 export default function SalesAnalytics() {
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({ label: '30d' });
+
 
   // Analytics data state
   const [salesTrend, setSalesTrend] = useState([]);
@@ -96,7 +96,7 @@ export default function SalesAnalytics() {
         setSalesTrend(salesRes.data);
         setForecast(forecastRes.data);
         setDistribution(distributionRes.data);
-      } catch (apiError) {
+      } catch {
         console.warn('Analytics API not available, using fallback mode');
         await fallbackCalculations();
       }
@@ -108,13 +108,12 @@ export default function SalesAnalytics() {
   };
 
   const fallbackCalculations = async () => {
-    const [salesRes, productsRes] = await Promise.all([
+    const [salesRes] = await Promise.all([
       getSales(),
       getProducts()
     ]);
 
     const sales = salesRes.data;
-    const products = productsRes.data;
 
     // Calculate KPIs
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -160,7 +159,7 @@ export default function SalesAnalytics() {
 
     // Sales distribution
     const amounts = sales.map(s => s.totalAmount);
-    const stats = calculateStatistics(amounts);
+    calculateStatistics(amounts);
     
     // Create histogram bins
     const bins = 10;
@@ -212,7 +211,7 @@ export default function SalesAnalytics() {
     const topClientsData = Object.values(clientMap)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10)
-      .map((client, idx) => ({
+      .map((client) => ({
         ...client,
         contribution: (client.revenue / totalRevenue) * 100
       }));
@@ -274,7 +273,7 @@ export default function SalesAnalytics() {
         </div>
 
         {/* Date Range Picker */}
-        <DateRangePicker onRangeChange={setDateRange} />
+        <DateRangePicker onRangeChange={() => {}} />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">

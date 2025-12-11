@@ -40,7 +40,7 @@ import KPICard from '../../components/Analytics/KPICard';
 import ChartWrapper from '../../components/Analytics/ChartWrapper';
 import ExportButton from '../../components/Analytics/ExportButton';
 import DateRangePicker from '../../components/Analytics/DateRangePicker';
-import { calculateGrowthRate, calculateSeasonality } from '../../utils/analyticsCalculations';
+import { calculateSeasonality } from '../../utils/analyticsCalculations';
 import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../utils/chartHelpers';
 
 /**
@@ -49,19 +49,17 @@ import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../uti
  */
 export default function CategoryAnalytics() {
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({ label: '30d' });
   
   // State for analytics data
   const [categoryKPIs, setCategoryKPIs] = useState([]);
   const [treemapData, setTreemapData] = useState([]);
   const [radarData, setRadarData] = useState([]);
-  const [seasonalityData, setSeasonalityData] = useState([]);
   const [growthMatrix, setGrowthMatrix] = useState([]);
   const [topProducts, setTopProducts] = useState({});
   const [flopProducts, setFlopProducts] = useState({});
 
   // Filters
-  const [minThreshold, setMinThreshold] = useState(0);
+  const [minThreshold] = useState(0);
   const [sortBy, setSortBy] = useState('revenue');
   const [sortDirection, setSortDirection] = useState('desc');
 
@@ -82,7 +80,7 @@ export default function CategoryAnalytics() {
         
         setCategoryKPIs(categoryRes.data);
         setTreemapData(treemapRes.data);
-      } catch (apiError) {
+      } catch {
         console.warn('Analytics API not available, using fallback mode');
         await fallbackCalculations();
       }
@@ -280,7 +278,7 @@ export default function CategoryAnalytics() {
         </div>
 
         {/* Date Range Picker */}
-        <DateRangePicker onRangeChange={setDateRange} />
+        <DateRangePicker onRangeChange={() => {}} />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

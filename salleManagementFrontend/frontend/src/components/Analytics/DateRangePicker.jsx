@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { subDays, startOfDay, endOfDay } from 'date-fns';
 
 /**
  * Date Range Picker Component

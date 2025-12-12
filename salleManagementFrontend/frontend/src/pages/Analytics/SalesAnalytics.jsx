@@ -263,7 +263,6 @@ export default function SalesAnalytics() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Sales Analytics</h1>
-            <p className="text-gray-600 mt-1">Advanced sales insights with forecasting and cohort analysis</p>
           </div>
           <ExportButton
             data={salesTrend}

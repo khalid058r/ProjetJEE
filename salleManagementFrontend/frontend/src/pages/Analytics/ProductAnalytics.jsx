@@ -333,7 +333,6 @@ export default function ProductAnalytics() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Product Analytics</h1>
-            <p className="text-gray-600 mt-1">Complete product performance analysis with insights</p>
           </div>
           <ExportButton
             data={productMatrix}

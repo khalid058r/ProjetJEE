@@ -26,28 +26,21 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-
-// SERVICES
 import AnalyticsService from "../../services/analyticsService";
 import { getSales } from "../../services/salesService";
 import { getProducts } from "../../services/productService";
 import { getCategories } from "../../services/categoryService";
-
-// COMPONENTS
 import KPICard from "../../components/Analytics/KPICard";
 import ChartWrapper from "../../components/Analytics/ChartWrapper";
 import ExportButton from "../../components/Analytics/ExportButton";
 import DateRangePicker from "../../components/Analytics/DateRangePicker";
 import InsightCard, { InsightsContainer } from "../../components/Analytics/InsightCard";
 
-// UTILITIES
 import { generateForecast } from "../../utils/analyticsCalculations";
 import { GA_COLORS, CHART_COLORS, formatCurrency, getHeatColor } from "../../utils/chartHelpers";
 import { prepareAnalyticsExport } from "../../utils/exportHelpers";
 
-/* ========================================================
-   HEATMAP BUILDER
-======================================================== */
+
 const buildHeatmapMatrix = (sales) => {
   const matrix = Array.from({ length: 7 }, () =>
     Array.from({ length: 24 }, () => 0)

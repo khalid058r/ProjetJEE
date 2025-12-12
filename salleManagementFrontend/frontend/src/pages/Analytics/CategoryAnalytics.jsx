@@ -268,7 +268,6 @@ export default function CategoryAnalytics() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Category Analytics</h1>
-            <p className="text-gray-600 mt-1">Comprehensive analysis of product categories performance</p>
           </div>
           <ExportButton
             data={categoryKPIs}

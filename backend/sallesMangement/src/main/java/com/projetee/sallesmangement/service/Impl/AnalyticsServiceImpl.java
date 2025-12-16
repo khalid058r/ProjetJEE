@@ -363,4 +363,81 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         return dto;
     }
+
+    @Override
+    public KPIResponse getVendeurKPI(Long userId) {
+
+        List<Sale> sales = saleRepo.findByUserId(userId).stream()
+                .filter(s -> s.getStatus() == SaleStatus.CONFIRMED)
+                .toList();
+
+        double revenue = sales.stream()
+                .mapToDouble(Sale::getTotalAmount)
+                .sum();
+
+        long count = sales.size();
+
+        double avgBasket = count == 0 ? 0.0 : revenue / count;
+
+        KPIResponse.Sales s = new KPIResponse.Sales();
+        s.setSalesCount(count);
+        s.setTotalRevenue(revenue);
+        s.setAverageBasket(avgBasket);
+
+        KPIResponse response = new KPIResponse();
+        response.setSales(s);
+
+        return response;
+    }
+
+    @Override
+    public List<TopProductResponse> getVendeurBestSellers(Long userId, int limit) {
+
+        List<Sale> sales = saleRepo.findByUserId(userId).stream()
+                .filter(s -> s.getStatus() == SaleStatus.CONFIRMED)
+                .toList();
+
+        Map<Product, Long> qty = new HashMap<>();
+        Map<Product, Double> revenue = new HashMap<>();
+
+        for (Sale s : sales) {
+            for (LigneVente lv : s.getLignesVente()) {
+                qty.merge(lv.getProduct(), (long) lv.getQuantity(), Long::sum);
+                revenue.merge(lv.getProduct(), lv.getLineTotal(), Double::sum);
+            }
+        }
+
+        return qty.entrySet().stream()
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                .limit(limit)
+                .map(e -> mapper.toTopProductResponse(
+                        e.getKey(),
+                        e.getValue(),
+                        revenue.getOrDefault(e.getKey(), 0.0)
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<DailySalesResponse> getVendeurDailySales(Long userId) {
+
+        List<Sale> sales = saleRepo.findByUserId(userId).stream()
+                .filter(s -> s.getStatus() == SaleStatus.CONFIRMED)
+                .toList();
+
+        return sales.stream()
+                .collect(Collectors.groupingBy(Sale::getSaleDate))
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> mapper.toDailySalesResponse(
+                        e.getKey(),
+                        e.getValue().stream().mapToDouble(Sale::getTotalAmount).sum(),
+                        e.getValue().size()
+                ))
+                .toList();
+    }
+
+
+
+
 }

@@ -2,6 +2,7 @@ import api from "./api";
 
 const AnalyticsService = {
   // Existing endpoints
+  // getGlobalKpi: () => api.get("/analytics/kpi"),
   getGlobalKpi: () => api.get("/analytics/kpi"),
   getMonthlySales: () => api.get("/analytics/sales/monthly"),
   getDailySales: (start, end) =>
@@ -31,6 +32,24 @@ const AnalyticsService = {
   getConversionFunnel: () => api.get("/analytics/funnel/conversion"),
   getCategoryTreemap: () => api.get("/analytics/categories/treemap"),
   getProductBCG: () => api.get("/analytics/products/bcg-matrix"),
+
+  getVendeurKPI: () => api.get("/analytics/vendeur/kpi"),
+  getVendeurBestSellers: (limit = 5) =>
+    api.get("/analytics/vendeur/products/best-sellers", { params: { limit } }),
+  getVendeurDailySales: () =>
+    api.get("/analytics/vendeur/sales/daily"),
+
+  getVendeurKPI: () =>
+  api.get("/analytics/vendeur/kpi"),
+
+getVendeurBestSellers: (limit = 5) =>
+  api.get("/analytics/vendeur/products/best-sellers", {
+    params: { limit },
+  }),
+
+getVendeurDailySales: () =>
+  api.get("/analytics/vendeur/sales/daily"),
+
 };
 
 export default AnalyticsService;

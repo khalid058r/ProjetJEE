@@ -69,4 +69,27 @@ public class AnalyticsController {
     public BasketStatsResponse getBasketStats() {
         return analyticsService.getBasketStats();
     }
+
+    @GetMapping("/vendeur/kpi")
+    public KPIResponse getVendeurKPI(
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        return analyticsService.getVendeurKPI(userId);
+    }
+
+    @GetMapping("/vendeur/products/best-sellers")
+    public List<TopProductResponse> getVendeurBestSellers(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return analyticsService.getVendeurBestSellers(userId, limit);
+    }
+
+    @GetMapping("/vendeur/sales/daily")
+    public List<DailySalesResponse> getVendeurDailySales(
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        return analyticsService.getVendeurDailySales(userId);
+    }
+
 }

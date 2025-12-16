@@ -83,6 +83,17 @@ import ProductAnalytics from "../pages/Analytics/ProductAnalytics"
 import CategoryAnalytics from "../pages/Analytics/CategoryAnalytics"
 import SalesAnalytics from "../pages/Analytics/SalesAnalytics"
 
+// Vendeur imports
+import VendeurLayout from "../layouts/VendeurLayout";
+import VendeurDashboard from "../pages/Vendeur/VendeurDashboard";
+import VendeurProducts from "../pages/Vendeur/VendeurProducts";
+import VendeurCategories from "../pages/Vendeur/VendeurCategories";
+import VendeurSales from "../pages/Vendeur/VendeurSales";
+import VendeurInvoices from "../pages/Vendeur/VendeurInvoices";
+import VendeurOverview from "../pages/Vendeur/Analytics/VendeurOverview";
+import VendeurProductAnalytics from "../pages/Vendeur/Analytics/VendeurProductAnalytics";
+import VendeurCategoryAnalytics from "../pages/Vendeur/Analytics/VendeurCategoryAnalytics";
+import VendeurSalesAnalytics from "../pages/Vendeur/Analytics/VendeurSalesAnalytics";
 
 import VendeurHome from "../pages/role-tests/VendeurHome";
 import AnalysteHome from "../pages/role-tests/AnalysteHome";
@@ -96,6 +107,8 @@ export default function AppRouter() {
 
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* Admin Routes */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
@@ -112,6 +125,24 @@ export default function AppRouter() {
           <Route path="/analytics/categories" element={<CategoryAnalytics />} />
           <Route path="/analytics/sales" element={<SalesAnalytics />} />
         </Route>
+
+        {/* Vendeur Routes */}
+        <Route element={<VendeurLayout />}>
+          <Route path="/vendeur/dashboard" element={<VendeurDashboard />} />
+          <Route path="/vendeur/products" element={<VendeurProducts />} />
+          <Route path="/vendeur/products/:id" element={<ProductDetails />} />
+          <Route path="/vendeur/categories" element={<VendeurCategories />} />
+          <Route path="/vendeur/categories/:id" element={<CategoryDetails />} />
+          <Route path="/vendeur/sales" element={<VendeurSales />} />
+          <Route path="/vendeur/sales/:id" element={<SaleDetails />} />
+          <Route path="/vendeur/invoices" element={<VendeurInvoices />} />
+          <Route path="/vendeur/analytics" element={<VendeurOverview />} />
+          <Route path="/vendeur/analytics/products" element={<VendeurProductAnalytics />} />
+          <Route path="/vendeur/analytics/categories" element={<VendeurCategoryAnalytics />} />
+          <Route path="/vendeur/analytics/sales" element={<VendeurSalesAnalytics />} />
+        </Route>
+
+        {/* Role Test Routes */}
         <Route path="/vendeur" element={<VendeurHome />} />
         <Route path="/analyste" element={<AnalysteHome />} />
         <Route path="/acheteur" element={<AcheteurHome />} />

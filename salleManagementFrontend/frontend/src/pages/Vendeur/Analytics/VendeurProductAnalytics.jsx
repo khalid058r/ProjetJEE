@@ -31,20 +31,20 @@ import {
   Legend,
 } from "recharts";
 
-import AnalyticsService from "../../services/analyticsService";
-import { getSales } from "../../services/salesService";
-import { getProducts } from "../../services/productService";
-import { getCategories } from "../../services/categoryService";
+import AnalyticsService from "../../../services/analyticsService";
+import { getSales } from "../../../services/salesService";
+import { getProducts } from "../../../services/productService";
+import { getCategories } from "../../../services/categoryService";
 
 // COMPONENTS
-import KPICard from "../../components/Analytics/KPICard";
-import ChartWrapper from "../../components/Analytics/ChartWrapper";
-import ExportButton from "../../components/Analytics/ExportButton";
-import DateRangePicker from "../../components/Analytics/DateRangePicker";
+import KPICard from "../../../components/Analytics/KPICard";
+import ChartWrapper from "../../../components/Analytics/ChartWrapper";
+import ExportButton from "../../../components/Analytics/ExportButton";
+import DateRangePicker from "../../../components/Analytics/DateRangePicker";
 
 // UTILITIES
-import { buildBCGMatrix } from "../../utils/analyticsCalculations";
-import { GA_COLORS, CHART_COLORS, formatCurrency, getBCGColor } from "../../utils/chartHelpers";
+import { buildBCGMatrix } from "../../../utils/analyticsCalculations";
+import { GA_COLORS, CHART_COLORS, formatCurrency, getBCGColor } from "../../../utils/chartHelpers";
 
 /* ===============================================================
    MAIN COMPONENT — PRODUCT ANALYTICS DASHBOARD

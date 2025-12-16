@@ -26,19 +26,19 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import AnalyticsService from "../../services/analyticsService";
-import { getSales } from "../../services/salesService";
-import { getProducts } from "../../services/productService";
-import { getCategories } from "../../services/categoryService";
-import KPICard from "../../components/Analytics/KPICard";
-import ChartWrapper from "../../components/Analytics/ChartWrapper";
-import ExportButton from "../../components/Analytics/ExportButton";
-import DateRangePicker from "../../components/Analytics/DateRangePicker";
-import InsightCard, { InsightsContainer } from "../../components/Analytics/InsightCard";
+import AnalyticsService from "../../../services/analyticsService";
+import { getSales } from "../../../services/salesService";
+import { getProducts } from "../../../services/productService";
+import { getCategories } from "../../../services/categoryService";
+import KPICard from "../../../components/Analytics/KPICard";
+import ChartWrapper from "../../../components/Analytics/ChartWrapper";
+import ExportButton from "../../../components/Analytics/ExportButton";
+import DateRangePicker from "../../../components/Analytics/DateRangePicker";
+import InsightCard, { InsightsContainer } from "../../../components/Analytics/InsightCard";
 
-import { generateForecast } from "../../utils/analyticsCalculations";
-import { GA_COLORS, CHART_COLORS, formatCurrency, getHeatColor } from "../../utils/chartHelpers";
-import { prepareAnalyticsExport } from "../../utils/exportHelpers";
+import { generateForecast } from "../../../utils/analyticsCalculations";
+import { GA_COLORS, CHART_COLORS, formatCurrency, getHeatColor } from "../../../utils/chartHelpers";
+import { prepareAnalyticsExport } from "../../../utils/exportHelpers";
 
 
 const buildHeatmapMatrix = (sales) => {

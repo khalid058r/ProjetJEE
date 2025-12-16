@@ -31,17 +31,17 @@ import {
   Legend
 } from 'recharts';
 
-import AnalyticsService from '../../services/analyticsService';
-import { getSales } from '../../services/salesService';
-import { getProducts } from '../../services/productService';
-import { getCategories } from '../../services/categoryService';
+import AnalyticsService from '../../../services/analyticsService';
+import { getSales } from '../../../services/salesService';
+import { getProducts } from '../../../services/productService';
+import { getCategories } from '../../../services/categoryService';
 
-import KPICard from '../../components/Analytics/KPICard';
-import ChartWrapper from '../../components/Analytics/ChartWrapper';
-import ExportButton from '../../components/Analytics/ExportButton';
-import DateRangePicker from '../../components/Analytics/DateRangePicker';
-import { calculateSeasonality } from '../../utils/analyticsCalculations';
-import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../utils/chartHelpers';
+import KPICard from '../../../components/Analytics/KPICard';
+import ChartWrapper from '../../../components/Analytics/ChartWrapper';
+import ExportButton from '../../../components/Analytics/ExportButton';
+import DateRangePicker from '../../../components/Analytics/DateRangePicker';
+import { calculateSeasonality } from '../../../utils/analyticsCalculations';
+import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../../utils/chartHelpers';
 
 /**
  * CategoryAnalytics Component

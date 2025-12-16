@@ -29,15 +29,15 @@ import {
   LabelList
 } from 'recharts';
 
-import AnalyticsService from '../../services/analyticsService';
-import { getSales } from '../../services/salesService';
-import { getProducts } from '../../services/productService';
+import AnalyticsService from '../../../services/analyticsService';
+import { getSales } from '../../../services/salesService';
+import { getProducts } from '../../../services/productService';
 
-import KPICard from '../../components/Analytics/KPICard';
-import ChartWrapper from '../../components/Analytics/ChartWrapper';
-import ExportButton from '../../components/Analytics/ExportButton';
-import DateRangePicker from '../../components/Analytics/DateRangePicker';
-import InsightCard, { InsightsContainer } from '../../components/Analytics/InsightCard';
+import KPICard from '../../../components/Analytics/KPICard';
+import ChartWrapper from '../../../components/Analytics/ChartWrapper';
+import ExportButton from '../../../components/Analytics/ExportButton';
+import DateRangePicker from '../../../components/Analytics/DateRangePicker';
+import InsightCard, { InsightsContainer } from '../../../components/Analytics/InsightCard';
 
 import {
   generateForecast,
@@ -45,8 +45,8 @@ import {
   calculateAOV,
   groupSalesByPeriod,
   buildCohortAnalysis
-} from '../../utils/analyticsCalculations';
-import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../utils/chartHelpers';
+} from '../../../utils/analyticsCalculations';
+import { GA_COLORS, CHART_COLORS, formatCurrency, formatNumber } from '../../../utils/chartHelpers';
 
 /**
  * SalesAnalytics Component

@@ -39,7 +39,7 @@ export default function VendeurSidebar() {
 
         {/* MAIN LINKS */}
         <div className="space-y-1">
-          {mainLinks.map(({ name, to, icon: Icon }) => (
+          {mainLinks.map(({ name, to, icon: IconComponent }) => (
             <NavLink
               key={to}
               to={to}
@@ -55,7 +55,7 @@ export default function VendeurSidebar() {
                 `
               }
             >
-              <Icon className="h-5 w-5 text-gray-500" />
+              <IconComponent className="h-5 w-5 text-gray-500" />
               {name}
             </NavLink>
           ))}
@@ -68,7 +68,7 @@ export default function VendeurSidebar() {
           </p>
 
           <div className="space-y-1">
-            {analyticsLinks.map(({ name, to, icon: Icon }) => (
+            {analyticsLinks.map(({ name, to, icon: IconComponent }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -84,7 +84,7 @@ export default function VendeurSidebar() {
                   `
                 }
               >
-                <Icon className="h-5 w-5 text-gray-500" />
+                <IconComponent className="h-5 w-5 text-gray-500" />
                 {name}
               </NavLink>
             ))}

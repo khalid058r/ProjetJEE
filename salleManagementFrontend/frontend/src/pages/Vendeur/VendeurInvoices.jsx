@@ -13,26 +13,26 @@ export default function VendeurInvoices() {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadSales();
-  }, []);
-
   const loadSales = async () => {
     try {
       const res = await getSales();
       setSales(res.data);
-    } catch (err) {
+    } catch {
       showToast("Failed to load sales", "error");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadSales();
+  }, []);
+
   const handleGenerateInvoice = async (sale) => {
     try {
       await generateInvoicePDF(sale);
       showToast("Invoice generated successfully", "success");
-    } catch (err) {
+    } catch {
       showToast("Failed to generate invoice", "error");
     }
   };
@@ -44,7 +44,7 @@ export default function VendeurInvoices() {
         await generateInvoicePDF(sale);
       }
       showToast(`Generated ${filtered.length} invoices`, "success");
-    } catch (err) {
+    } catch {
       showToast("Failed to generate invoices", "error");
     }
   };

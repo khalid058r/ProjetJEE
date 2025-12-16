@@ -15,18 +15,18 @@ export default function VendeurSales() {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadSales();
-  }, []);
-
   const loadSales = async () => {
     try {
       const res = await getSales();
       setSales(res.data);
-    } catch (err) {
+    } catch {
       showToast("Failed to load sales", "error");
     }
   };
+
+  useEffect(() => {
+    loadSales();
+  }, []);
 
   const confirmDelete = async () => {
     try {
@@ -43,7 +43,7 @@ export default function VendeurSales() {
     try {
       await generateInvoicePDF(sale);
       showToast("Invoice generated successfully", "success");
-    } catch (err) {
+    } catch {
       showToast("Failed to generate invoice", "error");
     }
   };

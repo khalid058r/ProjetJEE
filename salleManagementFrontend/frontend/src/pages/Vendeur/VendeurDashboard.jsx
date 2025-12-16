@@ -32,7 +32,7 @@ import { getCategories } from "../../services/categoryService";
    ⭐ UI COMPONENTS
 ======================================================= */
 
-const StatsCard = ({ title, value, icon: Icon, color = "blue" }) => (
+const StatsCard = ({ title, value, icon: IconComponent, color = "blue" }) => (
   <div className="bg-white p-6 rounded-2xl shadow-[0_3px_10px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all border border-gray-100">
     <div className="flex justify-between items-center">
       <div>
@@ -41,16 +41,16 @@ const StatsCard = ({ title, value, icon: Icon, color = "blue" }) => (
       </div>
 
       <div className={`p-4 rounded-xl bg-${color}-50 text-${color}-600 shadow-inner`}>
-        <Icon className="w-6 h-6" />
+        <IconComponent className="w-6 h-6" />
       </div>
     </div>
   </div>
 );
 
-const PerformerCard = ({ title, data, icon: Icon }) => (
+const PerformerCard = ({ title, data, icon: IconComponent }) => (
   <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1">
     <div className="flex items-center gap-2 mb-3">
-      <Icon className="w-5 h-5" />
+      <IconComponent className="w-5 h-5" />
       <h3 className="text-lg font-semibold tracking-wide">{title}</h3>
     </div>
 

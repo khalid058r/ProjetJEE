@@ -34,7 +34,6 @@ export default function VendeurProducts() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const [preview, setPreview] = useState(null);
-  const [loadingImg, setLoadingImg] = useState(false);
 
   const emptyForm = {
     asin: "",
@@ -49,11 +48,6 @@ export default function VendeurProducts() {
   };
 
   const [form, setForm] = useState(emptyForm);
-
-  useEffect(() => {
-    loadProducts();
-    loadCategories();
-  }, []);
 
   const loadProducts = async () => {
     try {
@@ -73,6 +67,11 @@ export default function VendeurProducts() {
     }
   };
 
+  useEffect(() => {
+    loadProducts();
+    loadCategories();
+  }, []);
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -81,10 +80,8 @@ export default function VendeurProducts() {
     if (!file) return;
 
     setPreview(URL.createObjectURL(file));
-    setLoadingImg(true);
 
     const url = await uploadImage(file);
-    setLoadingImg(false);
 
     setForm({ ...form, imageUrl: url });
   };

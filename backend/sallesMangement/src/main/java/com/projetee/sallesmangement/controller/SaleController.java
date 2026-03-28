@@ -2,6 +2,7 @@ package com.projetee.sallesmangement.controller;
 
 import com.projetee.sallesmangement.dto.sale.SaleRequest;
 import com.projetee.sallesmangement.dto.sale.SaleResponse;
+import com.projetee.sallesmangement.entity.Role;
 import com.projetee.sallesmangement.service.SaleService;
 
 import lombok.RequiredArgsConstructor;
@@ -34,17 +35,25 @@ public class SaleController {
         return ResponseEntity.ok(service.get(id));
     }
 
+//    @GetMapping
+//    public ResponseEntity<List<SaleResponse>> getAll() {
+//        return ResponseEntity.ok(service.getAll());
+//    }
     @GetMapping
-    public ResponseEntity<List<SaleResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public List<SaleResponse> getAll(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") Role role
+    ) {
+        return service.getAll(userId, role);
     }
-
     @GetMapping("/page")
     public ResponseEntity<Page<SaleResponse>> getPage(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") Role role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(service.getPaginated(page, size));
+        return ResponseEntity.ok(service.getPaginated(userId,role,page, size));
     }
 
 

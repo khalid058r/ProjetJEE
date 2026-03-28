@@ -91,20 +91,61 @@ public class SaleServiceImpl implements SaleService {
         return saleMapper.toResponse(sale);
     }
 
+//    @Override
+//    public List<SaleResponse> getAll() {
+//        return saleRepo.findAll()
+//                .stream()
+//                .map(saleMapper::toResponse)
+//                .toList();
+//    }
+
     @Override
-    public List<SaleResponse> getAll() {
-        return saleRepo.findAll()
-                .stream()
+    public List<SaleResponse> getAll(Long userId, Role role) {
+
+        List<Sale> sales;
+
+        if (role == Role.ADMIN) {
+            // Si l'utilisateur est un admin, récupérer toutes les ventes
+            sales = saleRepo.findAll();
+        } else if (role == Role.VENDEUR) {
+            // Si l'utilisateur est un vendeur, récupérer uniquement ses ventes
+            sales = saleRepo.findByUserId(userId);
+        } else {
+            throw new BadRequestException("Unauthorized role");
+        }
+
+        return sales.stream()
                 .map(saleMapper::toResponse)
                 .toList();
     }
 
+
+//    @Override
+//    public Page<SaleResponse> getPaginated(int page, int size) {
+//        Pageable pageable = PageRequest.of(page, size);
+//        return saleRepo.findAll(pageable)
+//                .map(saleMapper::toResponse);
+//    }
+
     @Override
-    public Page<SaleResponse> getPaginated(int page, int size) {
+    public Page<SaleResponse> getPaginated(Long userId, Role role, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return saleRepo.findAll(pageable)
-                .map(saleMapper::toResponse);
+
+        Page<Sale> salesPage;
+
+        if (role == Role.ADMIN) {
+            // Admin : Récupère toutes les ventes
+            salesPage = saleRepo.findAll(pageable);
+        } else if (role == Role.VENDEUR) {
+            // Vendeur : Récupère uniquement les ventes de ce vendeur
+            salesPage = saleRepo.findByUserId(userId, pageable);
+        } else {
+            throw new BadRequestException("Unauthorized role");
+        }
+
+        return salesPage.map(saleMapper::toResponse);
     }
+
 
     @Override
     public void delete(Long id) {

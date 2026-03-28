@@ -24,4 +24,8 @@ public interface AnalyticsService {
     SalesEvolutionResponse getCurrentMonthEvolution();
 
     BasketStatsResponse getBasketStats();
+
+    KPIResponse getVendeurKPI(Long userId);
+    List<TopProductResponse> getVendeurBestSellers(Long userId, int limit);
+    List<DailySalesResponse> getVendeurDailySales(Long userId);
 }

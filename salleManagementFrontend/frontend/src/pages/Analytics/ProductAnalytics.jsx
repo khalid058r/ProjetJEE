@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   DollarSign,
   ShoppingCart,
@@ -6,13 +6,16 @@ import {
   BarChart2,
   TrendingUp,
   TrendingDown,
+  Search,
+  Star,
+  Package,
+  AlertCircle,
+  Clock
 } from "lucide-react";
 
 import {
   AreaChart,
   Area,
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -25,6 +28,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  Legend,
 } from "recharts";
 
 import AnalyticsService from "../../services/analyticsService";
@@ -32,56 +36,15 @@ import { getSales } from "../../services/salesService";
 import { getProducts } from "../../services/productService";
 import { getCategories } from "../../services/categoryService";
 
-// COLORS
-const GA_BLUE = "#4285f4";
-const GA_GREEN = "#34a853";
-const GA_YELLOW = "#fbbc05";
-const GA_RED = "#ea4335";
-const COLORS = [GA_BLUE, GA_GREEN, GA_YELLOW, GA_RED, "#1a73e8"];
+// COMPONENTS
+import KPICard from "../../components/Analytics/KPICard";
+import ChartWrapper from "../../components/Analytics/ChartWrapper";
+import ExportButton from "../../components/Analytics/ExportButton";
+import DateRangePicker from "../../components/Analytics/DateRangePicker";
 
-/* ===============================================================
-   KPI CARD
-================================================================*/
-const KPICard = ({ title, value, variation, icon: Icon }) => {
-  const positive = variation >= 0;
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-gray-500 text-sm">{title}</p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
-          {variation !== null && (
-            <div
-              className={`flex items-center gap-1 text-sm font-semibold ${
-                positive ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {positive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              {variation}%
-            </div>
-          )}
-        </div>
-        <div className="p-4 bg-blue-50 rounded-xl text-blue-600">
-          <Icon size={28} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ===============================================================
-   HEATMAP BUILDER
-================================================================*/
-function buildHeatmapMatrix(sales) {
-  const matrix = Array.from({ length: 7 }, () =>
-    Array.from({ length: 24 }, () => 0)
-  );
-  sales.forEach((s) => {
-    const d = new Date(s.saleDate);
-    matrix[d.getDay()][d.getHours()] += s.totalAmount;
-  });
-  return matrix;
-}
+// UTILITIES
+import { buildBCGMatrix } from "../../utils/analyticsCalculations";
+import { GA_COLORS, CHART_COLORS, formatCurrency, getBCGColor } from "../../utils/chartHelpers";
 
 /* ===============================================================
    MAIN COMPONENT — PRODUCT ANALYTICS DASHBOARD
@@ -91,12 +54,12 @@ export default function ProductAnalytics() {
   const [daily, setDaily] = useState([]);
   const [categoryStats, setCategoryStats] = useState([]);
   const [bestProducts, setBestProducts] = useState([]);
-  const [lifecycle, setLifecycle] = useState([]);
-  const [priceHistogram, setPriceHistogram] = useState([]);
-  const [hourlySales, setHourlySales] = useState([]);
-  const [heatmap, setHeatmap] = useState([]);
   const [productMatrix, setProductMatrix] = useState([]);
+  const [bcgData, setBcgData] = useState({ stars: [], cashCows: [], questionMarks: [], dogs: [] });
+  const [recommendations, setRecommendations] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
 
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   /* ===============================================================
@@ -113,9 +76,6 @@ export default function ProductAnalytics() {
         dailyRes,
         catRes,
         bestRes,
-        lifecycleRes,
-        pricesRes,
-        hourlyRes,
         salesRes,
         prodRes,
       ] = await Promise.all([
@@ -123,9 +83,6 @@ export default function ProductAnalytics() {
         AnalyticsService.getDailySales(),
         AnalyticsService.getCategoryStats(),
         AnalyticsService.getBestSellers(5),
-        AnalyticsService.getProductLifecycle(),
-        AnalyticsService.getPriceHistogram(),
-        AnalyticsService.getHourlySales(),
         getSales(),
         getProducts(),
       ]);
@@ -134,12 +91,11 @@ export default function ProductAnalytics() {
       setDaily(dailyRes.data);
       setCategoryStats(catRes.data);
       setBestProducts(bestRes.data);
-      setLifecycle(lifecycleRes.data);
-      setPriceHistogram(pricesRes.data);
-      setHourlySales(hourlyRes.data);
-      setHeatmap(buildHeatmapMatrix(salesRes.data));
+      setAllProducts(prodRes.data);
 
       buildProductMatrix(salesRes.data, prodRes.data);
+      buildBCGAnalysis(prodRes.data, salesRes.data);
+      generateRecommendations(prodRes.data, salesRes.data);
     } catch (e) {
       console.warn("Analytics API incomplete — fallback mode", e);
       await fallbackLoad();
@@ -181,7 +137,7 @@ export default function ProductAnalytics() {
 
     const catMap = {};
     sales.forEach((s) =>
-      s.lignes.forEach((l) => {
+      s.lignes?.forEach((l) => {
         const p = products.find((x) => x.id === l.productId);
         if (!p) return;
         const c = categories.find((x) => x.id === p.categoryId);
@@ -198,7 +154,7 @@ export default function ProductAnalytics() {
 
     const productCount = {};
     sales.forEach((s) =>
-      s.lignes.forEach((l) => {
+      s.lignes?.forEach((l) => {
         productCount[l.productTitle] =
           (productCount[l.productTitle] || 0) + l.quantity;
       })
@@ -210,21 +166,10 @@ export default function ProductAnalytics() {
         .slice(0, 5)
     );
 
-    const hourly = {};
-    sales.forEach((s) => {
-      const h = new Date(s.saleDate).getHours();
-      hourly[h] = (hourly[h] || 0) + s.totalAmount;
-    });
-    setHourlySales(
-      Array.from({ length: 24 }).map((_, h) => ({
-        hour: `${h}:00`,
-        revenue: hourly[h] || 0,
-      }))
-    );
-
-    setHeatmap(buildHeatmapMatrix(sales));
-
+    setAllProducts(products);
     buildProductMatrix(sales, products);
+    buildBCGAnalysis(products, sales);
+    generateRecommendations(products, sales);
   };
 
   /* ===============================================================
@@ -234,14 +179,16 @@ export default function ProductAnalytics() {
     const map = {};
 
     sales.forEach((s) =>
-      s.lignes.forEach((l) => {
+      s.lignes?.forEach((l) => {
         if (!map[l.productId]) {
+          const product = products.find(p => p.id === l.productId);
           map[l.productId] = {
             id: l.productId,
             title: l.productTitle,
             qty: 0,
             revenue: 0,
             price: l.unitPrice,
+            stock: product?.stock || 0
           };
         }
         map[l.productId].qty += l.quantity;
@@ -253,12 +200,125 @@ export default function ProductAnalytics() {
   };
 
   /* ===============================================================
+      BCG MATRIX ANALYSIS
+  ================================================================*/
+  const buildBCGAnalysis = (products, sales) => {
+    const bcgResult = buildBCGMatrix(products, sales);
+    setBcgData(bcgResult);
+  };
+
+  /* ===============================================================
+      GENERATE RECOMMENDATIONS
+  ================================================================*/
+  const generateRecommendations = (products, sales) => {
+    const recs = [];
+
+    // Calculate product metrics
+    const productMetrics = {};
+    sales.forEach(sale => {
+      sale.lignes?.forEach(ligne => {
+        if (!productMetrics[ligne.productId]) {
+          const product = products.find(p => p.id === ligne.productId);
+          productMetrics[ligne.productId] = {
+            id: ligne.productId,
+            title: ligne.productTitle,
+            quantity: 0,
+            revenue: 0,
+            stock: product?.stock || 0,
+            price: ligne.unitPrice
+          };
+        }
+        productMetrics[ligne.productId].quantity += ligne.quantity;
+        productMetrics[ligne.productId].revenue += ligne.quantity * ligne.unitPrice;
+      });
+    });
+
+    // Low stock recommendations
+    Object.values(productMetrics).forEach(product => {
+      if (product.stock < 5 && product.quantity > 10) {
+        recs.push({
+          type: 'restock',
+          priority: 'high',
+          product: product.title,
+          message: `Low stock (${product.stock} units). High demand. Restock immediately.`,
+          icon: AlertCircle
+        });
+      }
+    });
+
+    // Slow movers - consider promotion
+    const avgQuantity = Object.values(productMetrics).reduce((sum, p) => sum + p.quantity, 0) / Object.values(productMetrics).length;
+    Object.values(productMetrics).forEach(product => {
+      if (product.quantity < avgQuantity * 0.3 && product.stock > 20) {
+        recs.push({
+          type: 'promotion',
+          priority: 'medium',
+          product: product.title,
+          message: `Slow mover with high stock. Consider promotion or discount.`,
+          icon: TrendingDown
+        });
+      }
+    });
+
+    // Stars - maintain momentum
+    const topProducts = Object.values(productMetrics)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 3);
+
+    topProducts.forEach(product => {
+      recs.push({
+        type: 'maintain',
+        priority: 'low',
+        product: product.title,
+        message: `Top performer. Ensure adequate stock and visibility.`,
+        icon: Star
+      });
+    });
+
+    setRecommendations(recs.slice(0, 10));
+  };
+
+  /* ===============================================================
+      FILTERED PRODUCTS (SEARCH)
+  ================================================================*/
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) return productMatrix;
+    
+    return productMatrix.filter(product =>
+      product.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [productMatrix, searchTerm]);
+
+  /* ===============================================================
+      PRODUCT STATUS BADGE
+  ================================================================*/
+  const getProductBadge = (product) => {
+    if (product.qty > 100) {
+      return { label: 'Top Seller', color: 'bg-green-100 text-green-800', icon: Star };
+    }
+    if (product.stock < 5) {
+      return { label: 'Low Stock', color: 'bg-red-100 text-red-800', icon: AlertTriangle };
+    }
+    if (product.qty < 10) {
+      return { label: 'Slow Mover', color: 'bg-yellow-100 text-yellow-800', icon: Clock };
+    }
+    return null;
+  };
+
+  /* ===============================================================
       LOADING UI
   ================================================================*/
   if (loading)
     return (
-      <div className="p-10 text-center text-gray-600 text-lg">
-        Chargement des analyses produits…
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+              <p className="text-gray-600">Loading Product Analytics...</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
 
@@ -267,150 +327,386 @@ export default function ProductAnalytics() {
   ================================================================*/
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto space-y-10">
+      <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* TITLE */}
-        <h1 className="text-3xl font-bold">Product Analytics</h1>
-        <p className="text-gray-600">Analyse complète des performances produits</p>
+        {/* HEADER */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Product Analytics</h1>
+          </div>
+          <ExportButton
+            data={productMatrix}
+            filename="product_analytics"
+            title="Product Analytics Report"
+          />
+        </div>
+
+        {/* DATE RANGE PICKER */}
+        <DateRangePicker onRangeChange={() => {}} />
 
         {/* KPI GRID */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <KPICard
             title="Revenue"
-            value={`${kpi.totalRevenue.toFixed(2)} DH`}
+            value={kpi.totalRevenue}
+            format="currency"
             variation={12}
             icon={DollarSign}
           />
-          <KPICard title="Sales" value={kpi.totalSales} variation={6} icon={ShoppingCart} />
+          <KPICard 
+            title="Sales" 
+            value={kpi.totalSales} 
+            format="number"
+            variation={6} 
+            icon={ShoppingCart} 
+          />
           <KPICard
             title="Avg Basket"
-            value={`${kpi.averageBasket.toFixed(2)} DH`}
+            value={kpi.averageBasket}
+            format="currency"
             variation={-2}
             icon={BarChart2}
           />
-          <KPICard title="Low Stock" value={kpi.lowStockCount} variation={null} icon={AlertTriangle} />
+          <KPICard 
+            title="Low Stock" 
+            value={kpi.lowStockCount} 
+            format="number"
+            variation={null} 
+            icon={AlertTriangle} 
+          />
         </div>
 
-        {/* DAILY TREND */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-3">Daily Revenue Trend</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={daily}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <Tooltip />
-              <Area dataKey="revenue" stroke={GA_BLUE} fill="#e8f0fe" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* CATEGORY PIE */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-3">Category Contribution</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={categoryStats} dataKey="totalRevenue" nameKey="categoryName" outerRadius={120}>
-                {categoryStats.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* BEST PRODUCTS */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Top Products</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={bestProducts}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="productTitle" />
-              <Tooltip />
-              <Bar dataKey="totalQuantity" fill={GA_BLUE} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* PRODUCT PERFORMANCE MATRIX */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-3">Product Performance Matrix</h2>
-          <p className="text-gray-500 text-sm mb-4">
-            Visualisation globale du catalogue : vitesse de vente, revenue et positionnement.
-          </p>
-
-          <ResponsiveContainer width="100%" height={350}>
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" dataKey="qty" name="Quantité" />
-              <YAxis type="number" dataKey="revenue" name="Revenue" />
-              <Tooltip formatter={(v) => v.toFixed(2)} />
-              <Scatter
-                data={productMatrix}
-                fill={GA_BLUE}
-                shape="circle"
-                size={(d) => Math.max(20, d.price * 1.5)}
-              />
-            </ScatterChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* HOURLY SALES */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-3">Hourly Sales</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={hourlySales}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <Tooltip />
-              <Bar dataKey="revenue" fill={GA_GREEN} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* HEATMAP */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Sales Heatmap (Jour × Heure)</h2>
-
-          <div className="overflow-auto">
-            <table className="border-collapse">
-              <thead>
-                <tr>
-                  <th className="p-2 text-xs text-gray-600">Jour / Heure</th>
-                  {Array.from({ length: 24 }).map((_, h) => (
-                    <th key={h} className="p-1 text-[10px] text-gray-500">
-                      {h}:00
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"].map((day, r) => (
-                  <tr key={r}>
-                    <td className="p-2 text-xs font-medium text-gray-700">{day}</td>
-                    {heatmap[r].map((value, c) => {
-                      const max = Math.max(...heatmap.flat());
-                      const intensity = max ? value / max : 0;
-                      const color = `rgba(66,133,244, ${0.12 + intensity * 0.88})`;
-                      return (
-                        <td
-                          key={c}
-                          className="w-6 h-6 border border-gray-100"
-                          style={{ backgroundColor: color }}
-                        ></td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* SEARCH BAR */}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
+
+        {/* BCG MATRIX */}
+        <ChartWrapper
+          title="BCG Matrix — Portfolio Analysis"
+          subtitle="Product classification: Stars, Cash Cows, Question Marks, Dogs"
+          height="500px"
+        >
+          <div className="grid grid-cols-2 gap-4 h-full">
+            {/* Stars */}
+            <div className="border-2 border-green-300 rounded-lg p-4 bg-green-50">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="text-green-600" size={20} />
+                <h3 className="font-semibold text-green-900">Stars</h3>
+                <span className="text-sm text-gray-600">High Growth, High Share</span>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {bcgData.stars.slice(0, 5).map((product, idx) => (
+                  <div key={idx} className="bg-white p-2 rounded text-sm">
+                    <div className="font-medium text-gray-900">{product.title}</div>
+                    <div className="text-gray-600">{formatCurrency(product.revenue)}</div>
+                  </div>
+                ))}
+                {bcgData.stars.length === 0 && (
+                  <p className="text-gray-500 text-sm">No products in this category</p>
+                )}
+              </div>
+            </div>
+
+            {/* Question Marks */}
+            <div className="border-2 border-yellow-300 rounded-lg p-4 bg-yellow-50">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle className="text-yellow-600" size={20} />
+                <h3 className="font-semibold text-yellow-900">Question Marks</h3>
+                <span className="text-sm text-gray-600">High Growth, Low Share</span>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {bcgData.questionMarks.slice(0, 5).map((product, idx) => (
+                  <div key={idx} className="bg-white p-2 rounded text-sm">
+                    <div className="font-medium text-gray-900">{product.title}</div>
+                    <div className="text-gray-600">{formatCurrency(product.revenue)}</div>
+                  </div>
+                ))}
+                {bcgData.questionMarks.length === 0 && (
+                  <p className="text-gray-500 text-sm">No products in this category</p>
+                )}
+              </div>
+            </div>
+
+            {/* Cash Cows */}
+            <div className="border-2 border-blue-300 rounded-lg p-4 bg-blue-50">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="text-blue-600" size={20} />
+                <h3 className="font-semibold text-blue-900">Cash Cows</h3>
+                <span className="text-sm text-gray-600">Low Growth, High Share</span>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {bcgData.cashCows.slice(0, 5).map((product, idx) => (
+                  <div key={idx} className="bg-white p-2 rounded text-sm">
+                    <div className="font-medium text-gray-900">{product.title}</div>
+                    <div className="text-gray-600">{formatCurrency(product.revenue)}</div>
+                  </div>
+                ))}
+                {bcgData.cashCows.length === 0 && (
+                  <p className="text-gray-500 text-sm">No products in this category</p>
+                )}
+              </div>
+            </div>
+
+            {/* Dogs */}
+            <div className="border-2 border-red-300 rounded-lg p-4 bg-red-50">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingDown className="text-red-600" size={20} />
+                <h3 className="font-semibold text-red-900">Dogs</h3>
+                <span className="text-sm text-gray-600">Low Growth, Low Share</span>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {bcgData.dogs.slice(0, 5).map((product, idx) => (
+                  <div key={idx} className="bg-white p-2 rounded text-sm">
+                    <div className="font-medium text-gray-900">{product.title}</div>
+                    <div className="text-gray-600">{formatCurrency(product.revenue)}</div>
+                  </div>
+                ))}
+                {bcgData.dogs.length === 0 && (
+                  <p className="text-gray-500 text-sm">No products in this category</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </ChartWrapper>
+
+        {/* RECOMMENDATIONS */}
+        {recommendations.length > 0 && (
+          <ChartWrapper
+            title="Smart Recommendations"
+            subtitle="Actionable insights for product management"
+          >
+            <div className="space-y-3">
+              {recommendations.map((rec, idx) => {
+                const Icon = rec.icon;
+                const colorMap = {
+                  high: 'bg-red-50 border-red-200 text-red-900',
+                  medium: 'bg-yellow-50 border-yellow-200 text-yellow-900',
+                  low: 'bg-blue-50 border-blue-200 text-blue-900'
+                };
+                return (
+                  <div key={idx} className={`border-l-4 p-4 rounded ${colorMap[rec.priority]}`}>
+                    <div className="flex items-start gap-3">
+                      <Icon size={20} className="mt-0.5" />
+                      <div>
+                        <p className="font-semibold">{rec.product}</p>
+                        <p className="text-sm mt-1">{rec.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ChartWrapper>
+        )}
+
+        {/* DAILY TREND */}
+        <ChartWrapper
+          title="Daily Revenue Trend"
+          subtitle="Product sales performance over time"
+          height="320px"
+        >
+          <ResponsiveContainer width="100%" height={320}>
+            <AreaChart data={daily}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                formatter={(value) => [formatCurrency(value), 'Revenue']}
+              />
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={GA_COLORS.blue} stopOpacity={0.8} />
+                  <stop offset="95%" stopColor={GA_COLORS.blue} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area 
+                dataKey="revenue" 
+                stroke={GA_COLORS.blue} 
+                fill="url(#colorRevenue)" 
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
+
+        {/* CATEGORY PIE */}
+        <ChartWrapper
+          title="Category Contribution"
+          subtitle="Revenue distribution by category"
+          height="350px"
+        >
+          <ResponsiveContainer width="100%" height={350}>
+            <PieChart>
+              <Pie 
+                data={categoryStats} 
+                dataKey="totalRevenue" 
+                nameKey="categoryName" 
+                outerRadius={120}
+                label={({ categoryName, percent }) => `${categoryName}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {categoryStats.map((_, i) => (
+                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => formatCurrency(value)} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
+
+        {/* BEST PRODUCTS */}
+        <ChartWrapper
+          title="Top Performing Products"
+          subtitle="Best sellers by quantity"
+          height="320px"
+        >
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={bestProducts}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="productTitle" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+              />
+              <Bar dataKey="totalQuantity" fill={GA_COLORS.blue} radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
+
+        {/* PRODUCT PERFORMANCE MATRIX */}
+        <ChartWrapper
+          title="Product Performance Matrix"
+          subtitle="Sales velocity, revenue, and positioning (bubble size = price)"
+          height="400px"
+        >
+          <ResponsiveContainer width="100%" height={400}>
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                type="number" 
+                dataKey="qty" 
+                name="Quantity Sold"
+                label={{ value: 'Quantity Sold', position: 'bottom', offset: 0 }}
+                tick={{ fontSize: 11 }}
+              />
+              <YAxis 
+                type="number" 
+                dataKey="revenue" 
+                name="Revenue"
+                label={{ value: 'Revenue (DH)', angle: -90, position: 'left' }}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload[0]) {
+                    const data = payload[0].payload;
+                    const badge = getProductBadge(data);
+                    return (
+                      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                        <p className="font-semibold text-gray-900">{data.title}</p>
+                        <p className="text-sm text-gray-600">Quantity: {data.qty}</p>
+                        <p className="text-sm text-gray-600">Revenue: {formatCurrency(data.revenue)}</p>
+                        <p className="text-sm text-gray-600">Price: {formatCurrency(data.price)}</p>
+                        <p className="text-sm text-gray-600">Stock: {data.stock}</p>
+                        {badge && (
+                          <span className={`inline-block mt-2 px-2 py-1 text-xs font-medium rounded ${badge.color}`}>
+                            {badge.label}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Legend />
+              <Scatter
+                data={filteredProducts}
+                fill={GA_COLORS.blue}
+                shape="circle"
+              >
+                {filteredProducts.map((entry, index) => {
+                  const badge = getProductBadge(entry);
+                  let color = GA_COLORS.blue;
+                  if (badge) {
+                    if (badge.label === 'Top Seller') color = GA_COLORS.green;
+                    if (badge.label === 'Low Stock') color = GA_COLORS.red;
+                    if (badge.label === 'Slow Mover') color = GA_COLORS.yellow;
+                  }
+                  return (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={color}
+                      r={Math.max(4, Math.min(entry.price / 10, 12))}
+                    />
+                  );
+                })}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
+
+        {/* PRODUCT CARDS WITH STATUS BADGES */}
+        <ChartWrapper
+          title="Product Catalog"
+          subtitle={`Showing ${filteredProducts.length} products${searchTerm ? ` matching "${searchTerm}"` : ''}`}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+            {filteredProducts.slice(0, 12).map((product, idx) => {
+              const badge = getProductBadge(product);
+              const BadgeIcon = badge?.icon;
+              
+              return (
+                <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-semibold text-gray-900 text-sm">{product.title}</h4>
+                    {badge && BadgeIcon && (
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded ${badge.color}`}>
+                        <BadgeIcon size={12} />
+                        {badge.label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Sold:</span>
+                      <span className="font-medium">{product.qty}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Revenue:</span>
+                      <span className="font-medium text-green-600">{formatCurrency(product.revenue)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Price:</span>
+                      <span className="font-medium">{formatCurrency(product.price)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Stock:</span>
+                      <span className={`font-medium ${product.stock < 5 ? 'text-red-600' : 'text-gray-900'}`}>
+                        {product.stock}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {filteredProducts.length > 12 && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              Showing 12 of {filteredProducts.length} products
+            </div>
+          )}
+        </ChartWrapper>
 
       </div>
     </div>
